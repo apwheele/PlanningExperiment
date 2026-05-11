@@ -1,0 +1,450 @@
+╭─── Claude Code v2.1.138 ─────────────────────────────────────────────────────╮
+│                                                   │ Tips for getting started │
+│                 Welcome back Andy!                │ Run /init to create a C… │
+│                                                   │ ──────────────────────── │
+│                      ▐▛███▜▌                      │ What's new               │
+│                     ▝▜█████▛▘                     │ Internal fixes           │
+│                       ▘▘ ▝▝                       │ [VSCode] Fixed extensio… │
+│                                                   │ Added `CLAUDE_CODE_ENAB… │
+│   Opus 4.6 · API Usage Billing · Crime De-Coder   │ /release-notes for more  │
+│   /…/Dropbox/PublicCode_Git/PlanningExperiment    │                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+❯ I need a math worksheet to go with this work. I want a quarto markdown        
+  document so it can have equations. Read index.html to see what it is doing.   
+                                                                                
+  Have section 1 be about the WDD test have it go:                              
+                                                                                
+   - only post data, the regression equation (see                               
+  https://andrewpwheeler.com/2022/08/04/using-weights-in-regression-examples/   
+  for how to express WDD as a Poisson regression equation)                      
+   - pre-data, normalized to unit time                                          
+   - then the IRR estimator (uses log link instead of linear link function)     
+                                                                                
+  Have section 2 be about the proportion test. Part 1 is the normal based       
+  approximation to the test. Part 2 is about the logistic regression equation   
+  with baseline differences in the outcome.                                     
+
+  Read 1 file (ctrl+o to expand)
+
+● Now let me fetch the reference blog post for the WDD as a Poisson regression
+  equation.
+
+● Agent(Fetch WDD regression blog post)
+  ⎿  Done (4 tool uses · 10.9k tokens · 54s)
+  (ctrl+o to expand)
+
+● I have the information needed. Let me create the Quarto document.
+
+● Write(methodology.qmd)
+  ⎿  Wrote 182 lines to methodology.qmd
+       1 ---
+       2 title: "Experiment Planning Methodology"
+       3 author: "Andrew Wheeler"
+       4 format:
+       5   html:
+       6     toc: true
+       7     number-sections: true
+       8 ---
+       9 
+      10 # WDD Count Test
+     … +240 lines (ctrl+o to expand)
+
+● Created methodology.qmd with the two main sections:
+
+  Section 1 (WDD Count Test):
+  1. Post-only data — Poisson regression with identity link and weights
+  2. Pre-post DiD — the full WDD formula as a weighted Poisson regression
+  3. IRR estimator — log link with offset, Wilson variance formula
+
+  Section 2 (Proportion Test):
+  1. Normal approximation — standard error of the proportion difference, how it
+  shrinks with time
+  2. Logistic regression — accounts for baseline differences across crime types
+  via fixed effects, estimates a common treatment OR
+
+  The document uses LaTeX equations throughout and includes the R glm() calls
+  that map to each formulation. You can render it with quarto render 
+  methodology.qmd.
+
+✻ Cooked for 1m 47s
+
+❯ Use mathbb for expected value and variance operators, use cdot instead of     
+  times for regression equations. Add the actual paper citations at the end.    
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(methodology.qmd)
+  ⎿  Added 1 line, removed 1 line
+      16  With only post-period data, the simplest formulation compares c
+          umulative crime counts across a treated and control area. The d
+          ata has one row per area, with $Y_i$ the crime count and $w_i$ 
+          the time weight (number of periods observed):
+      17  
+      18  $$
+      19 -E\left[\frac{Y_i}{w_i}\right] = \beta_0 + \beta_1 \cdot \text{T
+         -reat}_i                                                        
+      19 +\mathbb{E}\left[\frac{Y_i}{w_i}\right] = \beta_0 + \beta_1 \cdo
+         +t \text{Treat}_i                                               
+      20  $$
+      21  
+      22  estimated via a Poisson GLM with identity link and weights $w_i
+          $:
+
+● Update(methodology.qmd)
+  ⎿  Added 6 lines, removed 6 lines
+      30  The variance of the WDD estimate under Poisson assumptions is:
+      31  
+      32  $$
+      33 -\text{Var}(\hat{\beta}_1) = \frac{Y_{\text{control}}}{w_{\text{
+         -control}}^2} + \frac{Y_{\text{treated}}}{w_{\text{treated}}^2} 
+      33 +\mathbb{V}\text{ar}(\hat{\beta}_1) = \frac{Y_{\text{control}}}{
+         +w_{\text{control}}^2} + \frac{Y_{\text{treated}}}{w_{\text{trea
+         +ted}}^2}                                                       
+      34  $$
+      35  
+      36 -so the standard error is $\text{SE} = \sqrt{\text{Var}(\hat{\be
+         -ta}_1)}$ and a Wald test statistic is $Z = \hat{\beta}_1 / \tex
+         -t{SE}$.                                                        
+      36 +so the standard error is $\text{SE} = \sqrt{\mathbb{V}\text{ar}
+         +(\hat{\beta}_1)}$ and a Wald test statistic is $Z = \hat{\beta}
+         +_1 / \text{SE}$.                                               
+      37  
+      38  ## Pre-Post Difference-in-Differences
+      39  
+     ...
+      59  When normalized to unit time, the time weights $w_i$ equal the 
+          number of time periods for each observation (e.g., $w_{\text{pr
+          e}} = T_{\text{pre}}$, $w_{\text{post}} = T_{\text{post}}$). Th
+          e variance of $\hat{\beta}_3$ is:
+      60  
+      61  $$
+      62 -\text{Var}(\hat{\beta}_3) = \frac{Y_{C,\text{pre}}}{w_{C,\text{
+         -pre}}^2} + \frac{Y_{C,\text{post}}}{w_{C,\text{post}}^2} + \fra
+         -c{Y_{T,\text{pre}}}{w_{T,\text{pre}}^2} + \frac{Y_{T,\text{post
+         -}}}{w_{T,\text{post}}^2}                                       
+      62 +\mathbb{V}\text{ar}(\hat{\beta}_3) = \frac{Y_{C,\text{pre}}}{w_
+         +{C,\text{pre}}^2} + \frac{Y_{C,\text{post}}}{w_{C,\text{post}}^
+         +2} + \frac{Y_{T,\text{pre}}}{w_{T,\text{pre}}^2} + \frac{Y_{T,\
+         +text{post}}}{w_{T,\text{post}}^2}                              
+      63  $$
+      64  
+      65  This recovers the exact WDD formula from Wheeler & Ratcliffe (2
+          018):
+     ...
+       85  For the Wilson (2022) estimator, with no pre-period data, the 
+           variance of the log-IRR is approximated by:
+       86  
+       87  $$
+       88 -\text{Var}(\log \widehat{\text{IRR}}) \approx \frac{1}{Y_{C,\t
+          -ext{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5}         
+       88 +\mathbb{V}\text{ar}(\log \widehat{\text{IRR}}) \approx \frac{1
+          +}{Y_{C,\text{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5}
+       89  $$
+       90  
+       91  With pre-period data (DiD log-IRR):
+       92  
+       93  $$
+       94 -\text{Var}(\log \widehat{\text{IRR}}) \approx \frac{1}{Y_{C,\t
+          -ext{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5} + \frac{
+          -1}{Y_{C,\text{pre}} + 0.5} + \frac{1}{Y_{T,\text{pre}} + 0.5} 
+       94 +\mathbb{V}\text{ar}(\log \widehat{\text{IRR}}) \approx \frac{1
+          +}{Y_{C,\text{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5}
+          + + \frac{1}{Y_{C,\text{pre}} + 0.5} + \frac{1}{Y_{T,\text{pre}
+          +} + 0.5}                                                      
+       95  $$
+       96  
+       97  Confidence intervals for the IRR are computed on the log scale
+            and exponentiated:
+       98  
+       99  $$
+      100 -\text{CI} = \exp\left(\log(\widehat{\text{IRR}}) \pm z_{\alpha
+          -/2} \cdot \sqrt{\text{Var}(\log \widehat{\text{IRR}})}\right) 
+      100 +\text{CI} = \exp\left(\log(\widehat{\text{IRR}}) \pm z_{\alpha
+          +/2} \cdot \sqrt{\mathbb{V}\text{ar}(\log \widehat{\text{IRR}})
+          +}\right)                                                      
+      101  $$
+      102  
+      103  The IRR is appropriate when you expect a *percentage* reductio
+           n (e.g., 20% fewer crimes) rather than an absolute count reduc
+           tion, or when the treated and control areas have very differen
+           t baseline crime levels.
+
+● Update(methodology.qmd)
+  ⎿  Added 2 lines, removed 2 lines
+      40  When pre-period data is available, the WDD uses a difference-in
+          -differences design. The data now has one row per area-period (
+          4 rows: control-pre, control-post, treated-pre, treated-post):
+      41  
+      42  $$
+      43 -E\left[\frac{Y_i}{w_i}\right] = \beta_0 + \beta_1 \cdot \text{P
+         -ost}_i + \beta_2 \cdot \text{Treat}_i + \beta_3 \cdot (\text{Po
+         -st}_i \times \text{Treat}_i)                                   
+      43 +E\left[\frac{Y_i}{w_i}\right] = \beta_0 + \beta_1 \cdot \text{P
+         +ost}_i + \beta_2 \cdot \text{Treat}_i + \beta_3 \cdot (\text{Po
+         +st}_i \cdot \text{Treat}_i)                                    
+      44  $$
+      45  
+      46  estimated via:
+     ...
+      73  Instead of estimating an additive crime reduction, we can estim
+          ate a multiplicative effect via the Incident Rate Ratio (IRR). 
+          This uses a **log link** instead of the identity link:
+      74  
+      75  $$
+      76 -\log E[Y_i] = \log(w_i) + \gamma_0 + \gamma_1 \cdot \text{Post}
+         -_i + \gamma_2 \cdot \text{Treat}_i + \gamma_3 \cdot (\text{Post
+         -}_i \times \text{Treat}_i)                                     
+      76 +\log E[Y_i] = \log(w_i) + \gamma_0 + \gamma_1 \cdot \text{Post}
+         +_i + \gamma_2 \cdot \text{Treat}_i + \gamma_3 \cdot (\text{Post
+         +}_i \cdot \text{Treat}_i)                                      
+      77  $$
+      78  
+      79  where $\log(w_i)$ enters as an offset. The IRR is:
+
+● Update(methodology.qmd)
+  ⎿  Error editing file
+
+● The \times was already replaced. Let me check what's actually in the file now
+  for the DiD equation.
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(methodology.qmd)
+  ⎿  Added 1 line, removed 1 line
+      40  When pre-period data is available, the WDD uses a difference-in
+          -differences design. The data now has one row per area-period (
+          4 rows: control-pre, control-post, treated-pre, treated-post):
+      41  
+      42  $$
+      43 -E\left[\frac{Y_i}{w_i}\right] = \beta_0 + \beta_1 \cdot \text{P
+         -ost}_i + \beta_2 \cdot \text{Treat}_i + \beta_3 \cdot (\text{Po
+         -st}_i \cdot \text{Treat}_i)                                    
+      43 +\mathbb{E}\left[\frac{Y_i}{w_i}\right] = \beta_0 + \beta_1 \cdo
+         +t \text{Post}_i + \beta_2 \cdot \text{Treat}_i + \beta_3 \cdot 
+         +(\text{Post}_i \cdot \text{Treat}_i)                           
+      44  $$
+      45  
+      46  estimated via:
+
+● Now fix the IRR equation's E[Y_i] and the remaining \times in the IRR section:
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(methodology.qmd)
+  ⎿  Added 1 line, removed 1 line
+      73  Instead of estimating an additive crime reduction, we can estim
+          ate a multiplicative effect via the Incident Rate Ratio (IRR). 
+          This uses a **log link** instead of the identity link:
+      74  
+      75  $$
+      76 -\log E[Y_i] = \log(w_i) + \gamma_0 + \gamma_1 \cdot \text{Post}
+         -_i + \gamma_2 \cdot \text{Treat}_i + \gamma_3 \cdot (\text{Post
+         -}_i \cdot \text{Treat}_i)                                      
+      76 +\log \mathbb{E}[Y_i] = \log(w_i) + \gamma_0 + \gamma_1 \cdot \t
+         +ext{Post}_i + \gamma_2 \cdot \text{Treat}_i + \gamma_3 \cdot (\
+         +text{Post}_i \cdot \text{Treat}_i)                             
+      77  $$
+      78  
+      79  where $\log(w_i)$ enters as an offset. The IRR is:
+
+● Now let me also fix the \mathbb{V}\text{ar} — that's a bit awkward. Let me use
+   \mathbb{V}\text{ar} consistently... actually let me check how it rendered.
+  The replace-all already did it. Let me now add the references section at the
+  end.
+
+● Update(methodology.qmd)
+  ⎿  Added 10 lines
+      180  - Different crime types have substantially different baseline 
+           event rates
+      181  - You want to estimate a single treatment effect that applies 
+           uniformly across crime types on the odds-ratio scale
+      182  - The mixture of crime types differs between treated and contr
+           ol groups
+      183 +                                                              
+      184 +# References                                                  
+      185 +                                                              
+      186 +Wheeler, A. P., & Ratcliffe, J. H. (2018). A simple weighted d
+          +isplacement difference test to evaluate place based crime inte
+          +rventions. *Crime Science*, 7(1), 11. <https://link.springer.c
+          +om/article/10.1186/s40163-018-0085-5>                         
+      187 +                                                              
+      188 +Wilson, D. B. (2022). The relative incident rate ratio effect 
+          +size for count-based impact evaluations: When an odds ratio is
+          + not an odds ratio. *Journal of Quantitative Criminology*, 38(
+          +2), 323-341. <https://link.springer.com/article/10.1007/s10940
+          +-021-09494-w>                                                 
+      189 +                                                              
+      190 +Wheeler, A. P. (2022). Using weights in regression examples. *
+          +Andrew Wheeler's Blog*. <https://andrewpwheeler.com/2022/08/04
+          +/using-weights-in-regression-examples/>                       
+      191 +                                                              
+      192 +Wheeler, A. P. (2026). Experiment planning for crime analysts.
+          + *Crime De-Coder*. <https://crimede-coder.com/graphs/Planning>
+
+● Done. I replaced E with \mathbb{E}, \text{Var} with \mathbb{V}\text{ar},
+  \times with \cdot in the regression interaction terms, and added a References
+  section at the end with the four citations (Wheeler & Ratcliffe 2018, Wilson
+  2022, Wheeler 2022 blog post, Wheeler 2026 Crime De-Coder).
+
+✻ Baked for 43s
+
+❯ Why are the 0.5's in the IRR estimator?                                       
+
+● The +0.5 terms are a continuity correction (sometimes called a
+  Haldane-Anscombe correction). They prevent the variance from blowing up to
+  infinity when any of the cell counts is zero — which can happen in
+  small-sample or short-duration monitoring. Without them, a single zero-count
+  cell would make the standard error undefined.
+
+  Wilson (2022) uses this form specifically because the IRR estimator is meant
+  for small-count settings typical in place-based crime evaluations, where you
+  might have a control area with only a handful of crimes in the early time
+  periods. The +0.5 stabilizes the log-IRR variance estimate and keeps
+  confidence intervals well-behaved even when counts are very low.
+
+✻ Brewed for 6s
+❯ For the IRR part, have it say with no pre-period data, it uses the same       
+  equation as (just treated vs control), so probably only makes sense for areas 
+   with approximately equal crime types. With pre-data though, it is            
+  potentially reasonable to use areas with different counts, it depends on the  
+  parallel trends assumption, See https://andrewpwheeler.com/2021/03/18/compari 
+  ng-the-wdd-vs-the-wilson-log-irr-estimator/                                   
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(methodology.qmd)
+  ⎿  Added 7 lines, removed 3 lines
+       82  \text{IRR} = e^{\gamma_3}
+       83  $$
+       84  
+       85 -For the Wilson (2022) estimator, with no pre-period data, the 
+          -variance of the log-IRR is approximated by:                   
+       85 +With no pre-period data, the model reduces to a simple treated
+          +-vs-control comparison (i.e., no Post or interaction terms). T
+          +he Wilson (2022) variance of the log-IRR is approximated by:  
+       86  
+       87  $$
+       88  \mathbb{V}\text{ar}(\log \widehat{\text{IRR}}) \approx \frac{1
+           }{Y_{C,\text{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5}
+       89  $$
+       90  
+       91 -With pre-period data (DiD log-IRR):                           
+       91 +Because this post-only comparison has no baseline adjustment, 
+          +it only makes sense when the treated and control areas have ap
+          +proximately equal baseline crime counts. If the areas differ s
+          +ubstantially in their pre-intervention levels, the simple rati
+          +o will conflate pre-existing differences with treatment effect
+          +s.                                                            
+       92  
+       93 +With pre-period data (DiD log-IRR), the model includes all fou
+          +r terms and the variance becomes:                             
+       94 +                                                              
+       95  $$
+       96  \mathbb{V}\text{ar}(\log \widehat{\text{IRR}}) \approx \frac{1
+           }{Y_{C,\text{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5}
+            + \frac{1}{Y_{C,\text{pre}} + 0.5} + \frac{1}{Y_{T,\text{pre}
+           } + 0.5}
+       97  $$
+       98  
+       99 +With pre-period data it is potentially reasonable to use areas
+          + with different baseline crime counts, since the DiD structure
+          + nets out level differences. However, this depends on a parall
+          +el trends assumption — that the treated and control areas woul
+          +d have followed the same multiplicative trajectory absent trea
+          +tment. See Wheeler (2021) for a comparison of the WDD vs. the 
+          +Wilson log-IRR estimator and when each is appropriate: <https:
+          +//andrewpwheeler.com/2021/03/18/comparing-the-wdd-vs-the-wilso
+          +n-log-irr-estimator/>.                                        
+      100 +                                                              
+      101  Confidence intervals for the IRR are computed on the log scale
+            and exponentiated:
+      102  
+      103  $$
+      104  \text{CI} = \exp\left(\log(\widehat{\text{IRR}}) \pm z_{\alpha
+           /2} \cdot \sqrt{\mathbb{V}\text{ar}(\log \widehat{\text{IRR}})
+           }\right)
+      105  $$
+      106  
+      103 -The IRR is appropriate when you expect a *percentage* reductio
+          -n (e.g., 20% fewer crimes) rather than an absolute count reduc
+          -tion, or when the treated and control areas have very differen
+          -t baseline crime levels.                                      
+      107 +The IRR is appropriate when you expect a *percentage* reductio
+          +n (e.g., 20% fewer crimes) rather than an absolute count reduc
+          +tion.                                                         
+      108  
+      109  # Proportion Test
+      110  
+
+● Updated. The IRR section now explains that the post-only version is
+  essentially a simple treated-vs-control ratio (so areas should have similar
+  baseline counts), while the DiD version with pre-data can handle different
+  baseline levels — subject to the parallel trends assumption — with a link to
+  your 2021 blog post comparing the two estimators.
+
+✻ Churned for 19s
+
+❯ Read that webpage, https://andrewpwheeler.com/2021/03/18/comparing-the-wdd-vs 
+  -the-wilson-log-irr-estimator/, and then link/cite it as well                 
+
+● Agent(Fetch Wheeler 2021 blog post)
+  ⎿  Done (2 tool uses · 9.1k tokens · 16s)
+  (ctrl+o to expand)
+
+● Now I'll add it to the references section.
+
+● Update(methodology.qmd)
+  ⎿  Added 2 lines
+      191  
+      192  Wilson, D. B. (2022). The relative incident rate ratio effect 
+           size for count-based impact evaluations: When an odds ratio is
+            not an odds ratio. *Journal of Quantitative Criminology*, 38(
+           2), 323-341. <https://link.springer.com/article/10.1007/s10940
+           -021-09494-w>
+      193  
+      194 +Wheeler, A. P. (2021). Comparing the WDD vs the Wilson log IRR
+          + estimator. *Andrew Wheeler's Blog*. <https://andrewpwheeler.c
+          +om/2021/03/18/comparing-the-wdd-vs-the-wilson-log-irr-estimato
+          +r/>                                                           
+      195 +                                                              
+      196  Wheeler, A. P. (2022). Using weights in regression examples. *
+           Andrew Wheeler's Blog*. <https://andrewpwheeler.com/2022/08/04
+           /using-weights-in-regression-examples/>
+      197  
+      198  Wheeler, A. P. (2026). Experiment planning for crime analysts.
+            *Crime De-Coder*. <https://crimede-coder.com/graphs/Planning>
+
+● Done. Added the Wheeler (2021) "Comparing the WDD vs the Wilson log IRR
+  estimator" citation to the references section. It was already linked inline in
+   the IRR discussion from the previous edit.
+
+✻ Worked for 28s
+
+❯ /usage 
+  ⎿  Settings dialog dismissed
+
+❯ Have it say the 0.5 is the low count continuity correction                    
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(methodology.qmd)
+  ⎿  Added 1 line, removed 1 line
+      82  \text{IRR} = e^{\gamma_3}
+      83  $$
+      84  
+      85 -With no pre-period data, the model reduces to a simple treated-
+         -vs-control comparison (i.e., no Post or interaction terms). The
+         - Wilson (2022) variance of the log-IRR is approximated by:     
+      85 +With no pre-period data, the model reduces to a simple treated-
+         +vs-control comparison (i.e., no Post or interaction terms). The
+         + Wilson (2022) variance of the log-IRR is approximated by (wher
+         +e the +0.5 is a continuity correction for low counts):         
+      86  
+      87  $$
+      88  \mathbb{V}\text{ar}(\log \widehat{\text{IRR}}) \approx \frac{1}
+          {Y_{C,\text{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5}
+
+● Done. Added the note that the +0.5 is a continuity correction for low counts.
+
+✻ Sautéed for 9s

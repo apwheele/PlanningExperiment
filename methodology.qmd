@@ -1,0 +1,198 @@
+---
+title: "Experiment Planning Methodology"
+author: "Andrew Wheeler"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+# WDD Count Test
+
+The Weighted Displacement Difference (WDD) test evaluates whether a place-based intervention reduced crime counts by comparing treated and control areas across time periods. The WDD can be expressed as a Poisson regression with an identity link function.
+
+## Post-Only Data
+
+With only post-period data, the simplest formulation compares cumulative crime counts across a treated and control area. The data has one row per area, with $Y_i$ the crime count and $w_i$ the time weight (number of periods observed):
+
+$$
+\mathbb{E}\left[\frac{Y_i}{w_i}\right] = \beta_0 + \beta_1 \cdot \text{Treat}_i
+$$
+
+estimated via a Poisson GLM with identity link and weights $w_i$:
+
+```
+glm(rate ~ treat, data=df, weights=w, family=poisson(link="identity"))
+```
+
+where `rate` $= Y_i / w_i$ is the crime rate per unit time. Here $\beta_1$ is the estimated crime reduction per unit time in the treated area relative to control.
+
+The variance of the WDD estimate under Poisson assumptions is:
+
+$$
+\mathbb{V}\text{ar}(\hat{\beta}_1) = \frac{Y_{\text{control}}}{w_{\text{control}}^2} + \frac{Y_{\text{treated}}}{w_{\text{treated}}^2}
+$$
+
+so the standard error is $\text{SE} = \sqrt{\mathbb{V}\text{ar}(\hat{\beta}_1)}$ and a Wald test statistic is $Z = \hat{\beta}_1 / \text{SE}$.
+
+## Pre-Post Difference-in-Differences
+
+When pre-period data is available, the WDD uses a difference-in-differences design. The data now has one row per area-period (4 rows: control-pre, control-post, treated-pre, treated-post):
+
+$$
+\mathbb{E}\left[\frac{Y_i}{w_i}\right] = \beta_0 + \beta_1 \cdot \text{Post}_i + \beta_2 \cdot \text{Treat}_i + \beta_3 \cdot (\text{Post}_i \cdot \text{Treat}_i)
+$$
+
+estimated via:
+
+```
+glm(rate ~ post + treat + post:treat, data=df, weights=w, family=poisson(link="identity"))
+```
+
+The parameters are:
+
+- $\beta_0$: baseline crime rate (control, pre-period)
+- $\beta_1$: temporal trend (change in control area from pre to post)
+- $\beta_2$: baseline difference between areas
+- $\beta_3$: **the WDD treatment effect** (crime reduction attributable to treatment)
+
+When normalized to unit time, the time weights $w_i$ equal the number of time periods for each observation (e.g., $w_{\text{pre}} = T_{\text{pre}}$, $w_{\text{post}} = T_{\text{post}}$). The variance of $\hat{\beta}_3$ is:
+
+$$
+\mathbb{V}\text{ar}(\hat{\beta}_3) = \frac{Y_{C,\text{pre}}}{w_{C,\text{pre}}^2} + \frac{Y_{C,\text{post}}}{w_{C,\text{post}}^2} + \frac{Y_{T,\text{pre}}}{w_{T,\text{pre}}^2} + \frac{Y_{T,\text{post}}}{w_{T,\text{post}}^2}
+$$
+
+This recovers the exact WDD formula from Wheeler & Ratcliffe (2018):
+
+$$
+\text{WDD} = \left(\frac{Y_{T,\text{post}}}{w_{T,\text{post}}} - \frac{Y_{T,\text{pre}}}{w_{T,\text{pre}}}\right) - \left(\frac{Y_{C,\text{post}}}{w_{C,\text{post}}} - \frac{Y_{C,\text{pre}}}{w_{C,\text{pre}}}\right)
+$$
+
+## IRR Estimator (Log Link)
+
+Instead of estimating an additive crime reduction, we can estimate a multiplicative effect via the Incident Rate Ratio (IRR). This uses a **log link** instead of the identity link:
+
+$$
+\log \mathbb{E}[Y_i] = \log(w_i) + \gamma_0 + \gamma_1 \cdot \text{Post}_i + \gamma_2 \cdot \text{Treat}_i + \gamma_3 \cdot (\text{Post}_i \cdot \text{Treat}_i)
+$$
+
+where $\log(w_i)$ enters as an offset. The IRR is:
+
+$$
+\text{IRR} = e^{\gamma_3}
+$$
+
+With no pre-period data, the model reduces to a simple treated-vs-control comparison (i.e., no Post or interaction terms). The Wilson (2022) variance of the log-IRR is approximated by (where the +0.5 is a continuity correction for low counts):
+
+$$
+\mathbb{V}\text{ar}(\log \widehat{\text{IRR}}) \approx \frac{1}{Y_{C,\text{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5}
+$$
+
+Because this post-only comparison has no baseline adjustment, it only makes sense when the treated and control areas have approximately equal baseline crime counts. If the areas differ substantially in their pre-intervention levels, the simple ratio will conflate pre-existing differences with treatment effects.
+
+With pre-period data (DiD log-IRR), the model includes all four terms and the variance becomes:
+
+$$
+\mathbb{V}\text{ar}(\log \widehat{\text{IRR}}) \approx \frac{1}{Y_{C,\text{post}} + 0.5} + \frac{1}{Y_{T,\text{post}} + 0.5} + \frac{1}{Y_{C,\text{pre}} + 0.5} + \frac{1}{Y_{T,\text{pre}} + 0.5}
+$$
+
+With pre-period data it is potentially reasonable to use areas with different baseline crime counts, since the DiD structure nets out level differences. However, this depends on a parallel trends assumption — that the treated and control areas would have followed the same multiplicative trajectory absent treatment. See Wheeler (2021) for a comparison of the WDD vs. the Wilson log-IRR estimator and when each is appropriate: <https://andrewpwheeler.com/2021/03/18/comparing-the-wdd-vs-the-wilson-log-irr-estimator/>.
+
+Confidence intervals for the IRR are computed on the log scale and exponentiated:
+
+$$
+\text{CI} = \exp\left(\log(\widehat{\text{IRR}}) \pm z_{\alpha/2} \cdot \sqrt{\mathbb{V}\text{ar}(\log \widehat{\text{IRR}})}\right)
+$$
+
+The IRR is appropriate when you expect a *percentage* reduction (e.g., 20% fewer crimes) rather than an absolute count reduction.
+
+# Proportion Test
+
+For outcomes measured as proportions (e.g., arrest rates, clearance rates), we test whether the treated group has a different event probability than the control group.
+
+## Normal Approximation to the Proportion Difference
+
+Let $p_C$ and $p_T$ be the true event probabilities in the control and treated groups, with sample sizes $n_C$ and $n_T$ respectively. The estimated difference is:
+
+$$
+\hat{\delta} = \hat{p}_T - \hat{p}_C
+$$
+
+Under the normal approximation to the binomial, the standard error of the difference is:
+
+$$
+\text{SE}(\hat{\delta}) = \sqrt{\frac{p_C(1-p_C)}{n_C} + \frac{p_T(1-p_T)}{n_T}}
+$$
+
+A $(1 - \alpha)$ confidence interval for $\delta = p_T - p_C$ is:
+
+$$
+\hat{\delta} \pm z_{\alpha/2} \cdot \text{SE}(\hat{\delta})
+$$
+
+For planning purposes, as sample sizes grow over time ($n_C = n_{C,0} \cdot t$ and $n_T = n_{T,0} \cdot t$ for $t$ time periods), the standard error shrinks:
+
+$$
+\text{SE}(\hat{\delta}; t) = \sqrt{\frac{p_C(1-p_C)}{n_{C,0} \cdot t} + \frac{p_T(1-p_T)}{n_{T,0} \cdot t}}
+$$
+
+The confidence interval will exclude zero (indicating statistical significance) once $t$ is large enough that:
+
+$$
+|\hat{\delta}| > z_{\alpha/2} \cdot \text{SE}(\hat{\delta}; t)
+$$
+
+## Logistic Regression with Baseline Differences
+
+When the outcome has different baseline rates across subgroups (e.g., different crime types have different clearance rates), a logistic regression accounts for these differences while estimating a common treatment effect.
+
+The model is:
+
+$$
+\text{logit}\left(P(Y_i = 1)\right) = \beta_0 + \sum_{j=1}^{K-1} \beta_j \cdot \text{CrimeType}_{ij} + \beta_{\text{treat}} \cdot \text{Treat}_i
+$$
+
+where:
+
+- $Y_i \in \{0, 1\}$ is the binary outcome (e.g., arrest or not)
+- $\text{CrimeType}_{ij}$ are indicator variables for $K$ crime categories (one omitted as reference)
+- $\text{Treat}_i \in \{0, 1\}$ is the treatment indicator
+- $\beta_{\text{treat}}$ is the **log odds ratio** for the treatment effect
+
+The odds ratio for the treatment effect is:
+
+$$
+\text{OR} = e^{\beta_{\text{treat}}}
+$$
+
+The data-generating process for simulation assumes:
+
+$$
+P(Y_i = 1 \mid \text{CrimeType}_i, \text{Treat}_i) = \text{logistic}\left(\text{logit}(p_{\text{base},j}) + \beta_{\text{treat}} \cdot \text{Treat}_i\right)
+$$
+
+where $p_{\text{base},j}$ is the baseline solve rate for crime type $j$ and $\text{logistic}(x) = 1/(1+e^{-x})$.
+
+For planning, the target odds ratio is set and the simulation estimates the standard error of $\hat{\beta}_{\text{treat}}$ at various total sample sizes $N$. The confidence interval for the OR is:
+
+$$
+\text{CI(OR)} = \exp\left(\hat{\beta}_{\text{treat}} \pm z_{\alpha/2} \cdot \text{SE}(\hat{\beta}_{\text{treat}})\right)
+$$
+
+The logistic regression approach is preferred over the simple proportion test when:
+
+- Different crime types have substantially different baseline event rates
+- You want to estimate a single treatment effect that applies uniformly across crime types on the odds-ratio scale
+- The mixture of crime types differs between treated and control groups
+
+# References
+
+Wheeler, A. P., & Ratcliffe, J. H. (2018). A simple weighted displacement difference test to evaluate place based crime interventions. *Crime Science*, 7(1), 11. <https://link.springer.com/article/10.1186/s40163-018-0085-5>
+
+Wilson, D. B. (2022). The relative incident rate ratio effect size for count-based impact evaluations: When an odds ratio is not an odds ratio. *Journal of Quantitative Criminology*, 38(2), 323-341. <https://link.springer.com/article/10.1007/s10940-021-09494-w>
+
+Wheeler, A. P. (2021). Comparing the WDD vs the Wilson log IRR estimator. *Andrew Wheeler's Blog*. <https://andrewpwheeler.com/2021/03/18/comparing-the-wdd-vs-the-wilson-log-irr-estimator/>
+
+Wheeler, A. P. (2022). Using weights in regression examples. *Andrew Wheeler's Blog*. <https://andrewpwheeler.com/2022/08/04/using-weights-in-regression-examples/>
+
+Wheeler, A. P. (2026). Experiment planning for crime analysts. *Crime De-Coder*. <https://crimede-coder.com/graphs/Planning>
